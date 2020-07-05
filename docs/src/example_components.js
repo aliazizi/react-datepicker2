@@ -5,6 +5,7 @@ import Highlight from 'react-syntax-highlight';
 
 import Default from './examples/default';
 import Jalaali from './examples/jalaali';
+import HideTodayButton from './examples/HideTodayButton';
 import DisabledTimepicker from './examples/disabledTimepicker';
 import SwitchIsGregorian from './examples/switchIsGregorian';
 import CalendarPicker from './examples/calendarPicker';
@@ -14,6 +15,8 @@ import HighlightRange from './examples/HighlightRange';
 import Disabled from './examples/Disabled';
 import ReactHook from './examples/ReactHook';
 import RemoveDate from './examples/RemoveDate';
+import Placeholder from './examples/Placeholder';
+import ToggleButton from './examples/ToggleButton';
 
 import { StickyContainer, Sticky } from 'react-sticky';
 
@@ -23,6 +26,7 @@ export default class ExampleComponents extends React.Component {
     this.examples = [
       Default,
       Jalaali,
+      HideTodayButton,
       DisabledTimepicker,
       SwitchIsGregorian,
       CalendarPicker,
@@ -31,7 +35,9 @@ export default class ExampleComponents extends React.Component {
       HighlightRange,
       Disabled,
       ReactHook,
-      RemoveDate
+      RemoveDate,
+      Placeholder,
+      ToggleButton
     ];
   }
 

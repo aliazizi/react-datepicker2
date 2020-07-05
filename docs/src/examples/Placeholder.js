@@ -1,22 +1,25 @@
-import React from 'react'
-import momentJalaali from 'moment-jalaali'
+import React from 'react';
+import momentJalaali from 'moment-jalaali';
 import DatePicker from '../../../src/components/DatePicker';
 
-class component extends React.Component { 
+class component extends React.Component {
   constructor(props) {
     super(props);
 
-    this.state = {value: momentJalaali()};
+    this.state = { value: momentJalaali() };
   }
   render() {
-    return <DatePicker
-      value={this.state.value}
-      onChange={value => this.setState({ value })}
-    />
+    return (
+      <DatePicker
+        placeholder="e.g. 1993/11/12 12:03 PM"
+        value={this.state.value}
+        onChange={value => this.setState({ value })}
+      />
+    );
   }
 }
 
-const title = 'Default';
+const title = 'Placeholder';
 const code = `class component extends React.Component { 
   constructor(props) {
     super(props);
@@ -24,6 +27,7 @@ const code = `class component extends React.Component {
   }
   render() {
     return <DatePicker
+      placeholder="e.g. 1993/11/12 12:03 PM"
       value={this.state.value}
       onChange={value => this.setState({ value })}
     />

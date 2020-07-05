@@ -1,10 +1,8 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment-jalaali';
+import momentJalaali from 'moment-jalaali';
 import classnames from 'classnames';
 import MonthsViewHeading from './MonthsViewHeading';
-import { persianNumber } from '../utils/persian';
-import { leftArrow, rightArrow } from '../utils/assets';
 
 // List of months
 const monthsJalaali = [
@@ -69,7 +67,7 @@ export default class MonthSelector extends Component {
     const { setMonth, setCalendarMode } = this.context;
     const { isGregorian } = this.props;
     const monthYearFormat = isGregorian ? 'M-YYYY' : 'jM-jYYYY';
-    setMonth(moment(key, monthYearFormat));
+    setMonth(momentJalaali(key, monthYearFormat));
     setCalendarMode('days');
   }
 

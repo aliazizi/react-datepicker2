@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import moment from 'moment-jalaali';
+import momentJalaali from 'moment-jalaali';
 import TetherComponent from 'react-tether';
 import classnames from 'classnames';
 import Calendar from './Calendar';
@@ -10,14 +10,16 @@ const outsideClickIgnoreClass = 'ignore--click--outside';
 
 export default class DatePicker extends Component {
   static propTypes = {
-    value: PropTypes.object,
+    value: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
     defaultValue: PropTypes.object,
     onChange: PropTypes.func,
+    onInputChange: PropTypes.func,
     onFocus: PropTypes.func,
     onBlur: PropTypes.func,
     children: PropTypes.node,
     min: PropTypes.object,
     max: PropTypes.object,
+    defaultYear: PropTypes.object,
     defaultMonth: PropTypes.object,
     inputFormat: PropTypes.string,
     inputJalaaliFormat: PropTypes.string,
@@ -29,17 +31,22 @@ export default class DatePicker extends Component {
     timePicker: PropTypes.bool,
     calendarClass: PropTypes.string,
     datePickerClass: PropTypes.string,
-    datePickerClass: PropTypes.string,
     tetherAttachment: PropTypes.string,
-    inputReadOnly: PropTypes.object,
-    ranges: PropTypes.array
+    inputReadOnly: PropTypes.bool,
+    ranges: PropTypes.array,
+    showToggleButton: PropTypes.bool,
+    toggleButtonText: PropTypes.any,
+    showTodayButton: PropTypes.bool,
+    placeholder: PropTypes.string
   };
 
   static defaultProps = {
     styles: undefined,
     calendarContainerProps: {},
     isGregorian: true,
-    timePicker: true
+    timePicker: true,
+    showTodayButton: true,
+    placeholder: ''
   };
 
   constructor(props) {
@@ -56,11 +63,8 @@ export default class DatePicker extends Component {
         this.props.timePicker
       ),
       inputJalaaliFormat:
-        this.props.inputJalaaliFormat ||
-        this.getInputFormat(false, this.props.timePicker),
-      inputFormat:
-        this.props.inputFormat ||
-        this.getInputFormat(true, this.props.timePicker),
+        this.props.inputJalaaliFormat || this.getInputFormat(false, this.props.timePicker),
+      inputFormat: this.props.inputFormat || this.getInputFormat(true, this.props.timePicker),
       isGregorian: this.props.isGregorian,
       timePicker: this.props.timePicker,
       timePickerComponent: this.props.timePicker ? MyTimePicker : undefined
@@ -74,7 +78,7 @@ export default class DatePicker extends Component {
 
   getValue(inputValue, isGregorian, timePicker) {
     if (!inputValue) return '';
-    let { inputFormat } = this.state; 
+    let { inputFormat } = this.state;
     let { inputJalaaliFormat } = this.state;
     if (!inputFormat) inputFormat = this.getInputFormat(isGregorian, timePicker);
     if (!inputJalaaliFormat) inputJalaaliFormat = this.getInputFormat(isGregorian, timePicker);
@@ -85,8 +89,6 @@ export default class DatePicker extends Component {
   }
 
   setOpen = isOpen => {
-    const { momentValue } = this.state;
-
     this.setState({ isOpen });
 
     if (this.props.onOpen) {
@@ -106,14 +108,14 @@ export default class DatePicker extends Component {
     }
 
     if ('isGregorian' in nextProps && nextProps.isGregorian !== this.props.isGregorian) {
-      const { inputFormat } = nextProps;
-      const { inputJalaaliFormat } = nextProps;
+      const { inputFormat: nextPropsInputFormat } = nextProps;
+      const { inputJalaaliFormat: nextPropsInputJalaaliFormat } = nextProps;
 
       this.setState({
         isGregorian: nextProps.isGregorian,
         inputValue: this.getValue(nextProps.value, nextProps.isGregorian, nextProps.timePicker),
-        inputFormat,
-        inputJalaaliFormat
+        inputFormat: nextPropsInputFormat || this.state.inputFormat,
+        inputJalaaliFormat: nextPropsInputJalaaliFormat || this.state.inputJalaaliFormat
       });
     }
 
@@ -124,6 +126,16 @@ export default class DatePicker extends Component {
       });
     }
   }
+
+  toggleMode = () => {
+    const isGregorian = !this.state.isGregorian;
+    const { inputFormat: nextPropsInputFormat } = this.props;
+    const { inputJalaaliFormat: nextPropsInputJalaaliFormat } = this.props;
+    this.setState({
+      isGregorian: isGregorian,
+      inputValue: this.getValue(this.props.value, isGregorian, this.props.timePicker)
+    });
+  };
 
   setMomentValue(momentValue) {
     const { inputFormat, isGregorian, timePicker } = this.state;
@@ -183,17 +195,31 @@ export default class DatePicker extends Component {
   }
 
   handleInputChange(event) {
-    const { inputFormat } = this.state;
+    const { inputFormat, inputJalaaliFormat, isGregorian } = this.state;
     const inputValue = this.toEnglishDigits(event.target.value);
-    const momentValue = moment(inputValue, inputFormat);
+    const currentInputFormat = isGregorian ? inputFormat : inputJalaaliFormat;
+
+    const momentValue = momentJalaali(inputValue, currentInputFormat);
 
     if (momentValue.isValid()) {
       this.setState({ momentValue });
+      if (this.props.onChange) {
+        this.props.onChange(momentValue);
+      }
+    }
+    else if(inputValue === '') {
+      if (this.props.onChange) {
+        this.props.onChange('');
+      }
     }
 
     this.setState({ inputValue });
+    
+    if (this.props.onInputChange) {
+      this.props.onInputChange(event);
+    }
   }
- 
+
   handleInputClick() {
     if (!this.props.disabled) {
       this.setOpen(true);
@@ -210,6 +236,7 @@ export default class DatePicker extends Component {
     return (
       <div ref={ref}>
         <input
+          placeholder={this.props.placeholder}
           className={`datepicker-input ${className}`}
           type="text"
           ref={inst => {
@@ -228,15 +255,17 @@ export default class DatePicker extends Component {
 
   renderCalendar = ref => {
     const { momentValue, isGregorian, timePickerComponent: TimePicker } = this.state;
-    const { onChange, min, max, defaultMonth, styles, calendarContainerProps, ranges } = this.props;
+    const { onChange, min, max, defaultYear, defaultMonth, styles, calendarContainerProps, ranges } = this.props;
 
     return (
       <div ref={ref}>
         <Calendar
+          toggleMode={this.toggleMode}
           ranges={ranges}
           min={min}
           max={max}
           selectedDay={momentValue}
+          defaultYear={defaultYear}
           defaultMonth={defaultMonth}
           onSelect={this.handleSelectDay.bind(this)}
           onClickOutside={this.handleClickOutsideCalendar.bind(this)}
@@ -245,6 +274,9 @@ export default class DatePicker extends Component {
           containerProps={calendarContainerProps}
           isGregorian={isGregorian}
           calendarClass={this.props.calendarClass ? this.props.calendarClass : ''}
+          showToggleButton={this.props.showToggleButton}
+          toggleButtonText={this.props.toggleButtonText}
+          showTodayButton={this.props.showTodayButton}
           timePicker={
             TimePicker ? (
               <TimePicker
@@ -257,7 +289,7 @@ export default class DatePicker extends Component {
               />
             ) : null
           }
-        ></Calendar>
+        />
       </div>
     );
   };
